@@ -1,18 +1,29 @@
 package dev.soulware.beneficiarios.domain.model.entities;
 
+import dev.soulware.beneficiarios.domain.model.valueobjects.LegalDocument;
 import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
+
 import java.time.LocalDate;
+import java.util.UUID;
 
 @Entity
-@Table(name = "beneficiaries")
+@Table(
+        name = "beneficiaries",
+        uniqueConstraints = @UniqueConstraint(columnNames = {"legal_document_type", "legal_document"})
+)
 public class Beneficiary {
 
     @Id
-    @Column(name = "dni", length = 8, nullable = false, unique = true)
-    private String dni;
+    @Column(name = "id", nullable = false, updatable = false)
+    private UUID id;
+
+    @Embedded
+    private LegalDocument legalDocument;
 
     @Column(name = "names", nullable = false)
     private String names;
@@ -31,8 +42,9 @@ public class Beneficiary {
 
     public Beneficiary() {}
 
-    public Beneficiary(String dni, String names, String paternalSurname, String maternalSurname, LocalDate dateOfBirth, String ubigeo) {
-        this.dni = dni;
+    public Beneficiary(LegalDocument legalDocument, String names, String paternalSurname, String maternalSurname, LocalDate dateOfBirth, String ubigeo) {
+        this.id = UUID.randomUUID();
+        this.legalDocument = legalDocument;
         this.names = names;
         this.paternalSurname = paternalSurname;
         this.maternalSurname = maternalSurname;
@@ -40,8 +52,10 @@ public class Beneficiary {
         this.ubigeo = ubigeo;
     }
 
-    public String getDni() { return dni; }
-    public void setDni(String dni) { this.dni = dni; }
+    public UUID getId() { return id; }
+
+    public LegalDocument getLegalDocument() { return legalDocument; }
+    public void setLegalDocument(LegalDocument legalDocument) { this.legalDocument = legalDocument; }
 
     public String getNames() { return names; }
     public void setNames(String names) { this.names = names; }

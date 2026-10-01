@@ -1,6 +1,8 @@
 package dev.soulware.beneficiarios.application.services;
 
 import dev.soulware.beneficiarios.domain.model.entities.Beneficiary;
+import dev.soulware.beneficiarios.domain.model.valueobjects.LegalDocument;
+import dev.soulware.beneficiarios.domain.model.valueobjects.LegalDocumentType;
 import dev.soulware.beneficiarios.infrastructure.persistence.jpa.repositories.BeneficiaryRepository;
 import dev.soulware.beneficiarios.interfaces.rest.dto.Page;
 import jakarta.persistence.criteria.Predicate;
@@ -9,6 +11,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -22,7 +25,8 @@ public class BeneficiaryService {
     }
 
     public Page<Beneficiary> getBeneficiaries(
-            String names, String paternalSurname, String maternalSurname, String dni, int page, int size) {
+            String names, String paternalSurname, String maternalSurname,
+            LegalDocumentType legalDocumentType, String legalDocumentNumber, int page, int size) {
 
         PageRequest pageRequest = PageRequest.of(page, size);
 
@@ -38,8 +42,11 @@ public class BeneficiaryService {
             if (maternalSurname != null && !maternalSurname.isBlank()) {
                 predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("maternalSurname")), "%" + maternalSurname.toLowerCase() + "%"));
             }
-            if (dni != null && !dni.isBlank()) {
-                predicates.add(criteriaBuilder.equal(root.get("dni"), dni));
+            if (legalDocumentType != null) {
+                predicates.add(criteriaBuilder.equal(root.get("legalDocument").get("type"), legalDocumentType));
+            }
+            if (legalDocumentNumber != null && !legalDocumentNumber.isBlank()) {
+                predicates.add(criteriaBuilder.equal(root.get("legalDocument").get("number"), legalDocumentNumber));
             }
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
@@ -56,7 +63,27 @@ public class BeneficiaryService {
         );
     }
 
-    public Optional<Beneficiary> getBeneficiaryByDni(String dni) {
-        return beneficiaryRepository.findById(dni);
+    /**
+     * Resolves many identities in one query. Identities nobody holds are simply absent from the result.
+     */
+    public List<Beneficiary> findByLegalDocuments(Collection<LegalDocument> legalDocuments) {
+        if (legalDocuments.isEmpty()) {
+            return List.of();
+        }
+        Specification<Beneficiary> spec = (root, query, criteriaBuilder) -> criteriaBuilder.or(
+                legalDocuments.stream()
+                        .map(document -> criteriaBuilder.and(
+                                criteriaBuilder.equal(root.get("legalDocument").get("type"), document.type()),
+                                criteriaBuilder.equal(root.get("legalDocument").get("number"), document.number())))
+                        .toArray(Predicate[]::new));
+
+        return beneficiaryRepository.findAll(spec);
+    }
+
+    public Optional<Beneficiary> getBeneficiaryByLegalDocument(LegalDocumentType type, String number) {
+        if (type == null || !type.matches(number)) {
+            return Optional.empty();
+        }
+        return beneficiaryRepository.findByLegalDocument(new LegalDocument(type, number));
     }
 }
