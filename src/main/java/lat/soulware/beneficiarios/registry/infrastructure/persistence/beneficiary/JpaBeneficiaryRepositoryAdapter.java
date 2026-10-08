@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 import lat.soulware.beneficiarios.registry.domain.model.aggregates.Beneficiary;
 import lat.soulware.beneficiarios.registry.domain.model.exceptions.BeneficiaryNotFoundException;
 import lat.soulware.beneficiarios.registry.domain.model.valueobjects.BeneficiaryId;
+import lat.soulware.beneficiarios.registry.domain.model.valueobjects.DateOfBirth;
 import lat.soulware.beneficiarios.registry.domain.model.valueobjects.LegalDocument;
 import lat.soulware.beneficiarios.registry.domain.model.valueobjects.LegalDocumentType;
 import lat.soulware.beneficiarios.registry.domain.model.valueobjects.PersonName;
@@ -52,7 +53,7 @@ public class JpaBeneficiaryRepositoryAdapter
             aggregate.getName().names(),
             aggregate.getName().paternalSurname(),
             aggregate.getName().maternalSurname(),
-            aggregate.getDateOfBirth(),
+            aggregate.getDateOfBirth().value(),
             aggregate.getResidence().value()
         );
     }
@@ -63,7 +64,7 @@ public class JpaBeneficiaryRepositoryAdapter
             new BeneficiaryId(entity.getId()),
             new LegalDocument(LegalDocumentType.named(entity.getLegalDocumentType()), entity.getLegalDocumentNumber()),
             new PersonName(entity.getNames(), entity.getPaternalSurname(), entity.getMaternalSurname()),
-            entity.getDateOfBirth(),
+            new DateOfBirth(entity.getDateOfBirth()),
             new Ubigeo(entity.getUbigeo())
         );
     }
