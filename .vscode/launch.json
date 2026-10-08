@@ -1,0 +1,12 @@
+{
+  "configurations": [
+    {
+      "type": "java",
+      "name": "Beneficiarios (Spring Boot)",
+      "request": "launch",
+      "mainClass": "lat.soulware.beneficiarios.BeneficiariosApplication",
+      "projectName": "beneficiarios",
+      "envFile": "${workspaceFolder}/.env"
+    }
+  ]
+}
