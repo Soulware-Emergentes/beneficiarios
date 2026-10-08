@@ -45,5 +45,5 @@ logs/
 src/test/java/lat/soulware/beneficiarios/*
 !src/test/java/lat/soulware/beneficiarios/ApplicationLaunchIT.java
 .github/
-docs/
+/docs/
 deploy/
