@@ -30,6 +30,8 @@ public abstract class PostgresIntegrationTest {
     // WARNING: DO NOT let these match your actual .env passwords
     private static final String MIGRATOR_PASSWORD = "MIGRATOR_RANDOM_PASSWORD";
     private static final String APP_PASSWORD = "APP_RANDOM_PASSWORD";
+    /** The frontend origin the API lets look beneficiaries up from the browser. */
+    protected static final String WEB_ORIGIN = "http://localhost:4200";
 
     private static final Path SETUP_ROLES_SCRIPT = Path.of("scripts", "db", "setup-roles.sql");
     private static final String SCRIPT_PATH_IN_CONTAINER = "/tmp/setup-roles.sql";
@@ -109,6 +111,7 @@ public abstract class PostgresIntegrationTest {
         registry.add("spring.datasource.username", () -> APP_USERNAME);
         registry.add("spring.datasource.password", () -> APP_PASSWORD);
         registry.add("API_DOCS_ENABLED", () -> "true");
+        registry.add("BENEFICIARIOS_WEB_ORIGIN", () -> WEB_ORIGIN);
     }
 
     @DynamicPropertySource

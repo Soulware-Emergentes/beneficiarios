@@ -3,7 +3,9 @@ package lat.soulware.beneficiarios.registry.interfaces.rest.beneficiary;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -130,13 +132,20 @@ class BeneficiaryApiIT extends PostgresIntegrationTest {
     }
 
     @Test
-    void onlyAServiceTokenWithTheReadScopeIsAdmitted() throws Exception {
+    void onlyAServiceTokenWithTheReadScopeListsTheRegistry() throws Exception {
         this.mockMvc.perform(get("/api/v1/beneficiaries"))
             .andExpect(status().isUnauthorized());
         String person = TestTokens.issue(
             TestTokens.ISSUER, TestTokens.AUDIENCE, "user", "someone", List.of("beneficiaries.read")
         );
         this.mockMvc.perform(get("/api/v1/beneficiaries").header("Authorization", "Bearer " + person))
+            .andExpect(status().isForbidden());
+        this.mockMvc.perform(get("/api/v1/beneficiaries").header("Authorization", "Bearer " + TestTokens.person("field-agent")))
+            .andExpect(status().isForbidden());
+        String unknownUse = TestTokens.issue(
+            TestTokens.ISSUER, TestTokens.AUDIENCE, "other", "someone", List.of("beneficiaries.read")
+        );
+        this.mockMvc.perform(get("/api/v1/beneficiaries").header("Authorization", "Bearer " + unknownUse))
             .andExpect(status().isUnauthorized());
         String elsewhere = TestTokens.issue(
             TestTokens.ISSUER, "poi-api-dev", "service", "sgt-service-dev", List.of("beneficiaries.read")
@@ -147,6 +156,45 @@ class BeneficiaryApiIT extends PostgresIntegrationTest {
                 .header("Authorization", "Bearer " + TestTokens.service("tasks.read"))
             )
             .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void aFieldAgentLooksUpTheBeneficiariesWhoseDocumentsTheyHave() throws Exception {
+        this.lookupAs(TestTokens.person("field-agent"), """
+            {"legalDocuments": [{"type": "DNI", "number": "99664504"}]}""")
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.found[0].names").value("Guillermo"));
+    }
+
+    @Test
+    void aPersonWithoutTheFieldAgentRoleCannotLookUp() throws Exception {
+        this.lookupAs(TestTokens.person("general-management-assistant"), """
+            {"legalDocuments": [{"type": "DNI", "number": "99664504"}]}""")
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void theFrontendMayLookUpFromTheBrowser() throws Exception {
+        this.mockMvc.perform(options("/api/v1/beneficiaries/lookup")
+                .header("Origin", WEB_ORIGIN)
+                .header("Access-Control-Request-Method", "POST")
+                .header("Access-Control-Request-Headers", "Authorization, Content-Type")
+            )
+            .andExpect(status().isOk())
+            .andExpect(header().string("Access-Control-Allow-Origin", WEB_ORIGIN));
+        this.mockMvc.perform(options("/api/v1/beneficiaries/lookup")
+                .header("Origin", "https://elsewhere.example")
+                .header("Access-Control-Request-Method", "POST")
+            )
+            .andExpect(status().isForbidden());
+    }
+
+    private ResultActions lookupAs(String token, String body) throws Exception {
+        return this.mockMvc.perform(post("/api/v1/beneficiaries/lookup")
+            .header("Authorization", "Bearer " + token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(body)
+        );
     }
 
     private ResultActions lookup(String body) throws Exception {

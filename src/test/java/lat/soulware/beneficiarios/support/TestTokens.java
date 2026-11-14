@@ -61,6 +61,28 @@ public final class TestTokens {
     }
 
     /**
+     * @param roles the roles the person acts as, such as {@code field-agent}
+     * @return a person's access token for beneficiarios, as staff issues it after a login: roles and
+     *         no scope
+     */
+    public static String person(String... roles) {
+        Instant now = Instant.now();
+        JwtClaimsSet claims = JwtClaimsSet.builder()
+            .issuer(ISSUER)
+            .audience(List.of(AUDIENCE))
+            .subject(UUID.randomUUID().toString())
+            .issuedAt(now)
+            .notBefore(now)
+            .expiresAt(now.plusSeconds(300))
+            .claim("token_use", "user")
+            .claim("roles", List.of(roles))
+            .build();
+        JwsHeader header = JwsHeader.with(SignatureAlgorithm.RS256).build();
+
+        return ENCODER.encode(JwtEncoderParameters.from(header, claims)).getTokenValue();
+    }
+
+    /**
      * @return a token any field of which may differ from what staff issues to a service for
      *         beneficiarios
      */
