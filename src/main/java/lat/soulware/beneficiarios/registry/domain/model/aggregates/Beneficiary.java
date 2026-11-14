@@ -1,12 +1,11 @@
 package lat.soulware.beneficiarios.registry.domain.model.aggregates;
 
-import java.time.LocalDate;
-
 import lat.soulware.beneficiarios.registry.domain.model.exceptions.MissingDateOfBirthException;
 import lat.soulware.beneficiarios.registry.domain.model.exceptions.MissingLegalDocumentException;
 import lat.soulware.beneficiarios.registry.domain.model.exceptions.MissingPersonNameException;
 import lat.soulware.beneficiarios.registry.domain.model.exceptions.MissingResidenceException;
 import lat.soulware.beneficiarios.registry.domain.model.valueobjects.BeneficiaryId;
+import lat.soulware.beneficiarios.registry.domain.model.valueobjects.DateOfBirth;
 import lat.soulware.beneficiarios.registry.domain.model.valueobjects.LegalDocument;
 import lat.soulware.beneficiarios.registry.domain.model.valueobjects.PersonName;
 import lat.soulware.beneficiarios.registry.domain.model.valueobjects.Ubigeo;
@@ -22,14 +21,14 @@ public class Beneficiary extends AggregateRoot<BeneficiaryId> {
     private final BeneficiaryId id;
     private final LegalDocument legalDocument;
     private final PersonName name;
-    private final LocalDate dateOfBirth;
+    private final DateOfBirth dateOfBirth;
     private final Ubigeo residence;
 
     private Beneficiary(
         BeneficiaryId id,
         LegalDocument legalDocument,
         PersonName name,
-        LocalDate dateOfBirth,
+        DateOfBirth dateOfBirth,
         Ubigeo residence
     ) {
         if (legalDocument == null) {
@@ -63,7 +62,7 @@ public class Beneficiary extends AggregateRoot<BeneficiaryId> {
         BeneficiaryId id,
         LegalDocument legalDocument,
         PersonName name,
-        LocalDate dateOfBirth,
+        DateOfBirth dateOfBirth,
         Ubigeo residence
     ) {
         return new Beneficiary(id, legalDocument, name, dateOfBirth, residence);
@@ -82,7 +81,7 @@ public class Beneficiary extends AggregateRoot<BeneficiaryId> {
         return this.name;
     }
 
-    public LocalDate getDateOfBirth() {
+    public DateOfBirth getDateOfBirth() {
         return this.dateOfBirth;
     }
 
