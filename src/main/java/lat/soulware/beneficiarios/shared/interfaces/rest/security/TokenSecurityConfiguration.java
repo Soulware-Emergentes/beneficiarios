@@ -4,11 +4,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.GrantedAuthority;
@@ -18,9 +16,6 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtClaimValidator;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 /**
  * Admits a request only with a bearer token staff issued: signed with one of the keys staff
@@ -62,7 +57,6 @@ public class TokenSecurityConfiguration {
         tokenReader.setJwtGrantedAuthoritiesConverter(TokenSecurityConfiguration::authoritiesOf);
 
         return http.csrf(csrf -> csrf.disable())
-            .cors(Customizer.withDefaults())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(requests -> requests
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
@@ -84,19 +78,6 @@ public class TokenSecurityConfiguration {
             TOKEN_USE_CLAIM,
             tokenUse -> SERVICE_TOKEN_USE.equals(tokenUse) || PERSON_TOKEN_USE.equals(tokenUse)
         );
-    }
-
-    /** Lets sgt's frontend look beneficiaries up from the browser. */
-    @Bean
-    CorsConfigurationSource corsConfigurationSource(@Value("${beneficiarios.web.origin}") String webOrigin) {
-        CorsConfiguration cors = new CorsConfiguration();
-        cors.setAllowedOrigins(List.of(webOrigin));
-        cors.setAllowedMethods(List.of("POST", "OPTIONS"));
-        cors.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept-Language"));
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/api/v1/beneficiaries/lookup", cors);
-        return source;
     }
 
     private static Collection<GrantedAuthority> authoritiesOf(Jwt token) {

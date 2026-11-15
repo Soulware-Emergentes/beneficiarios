@@ -3,9 +3,7 @@ package lat.soulware.beneficiarios.registry.interfaces.rest.beneficiary;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -170,22 +168,6 @@ class BeneficiaryApiIT extends PostgresIntegrationTest {
     void aPersonWithoutTheFieldAgentRoleCannotLookUp() throws Exception {
         this.lookupAs(TestTokens.person("general-management-assistant"), """
             {"legalDocuments": [{"type": "DNI", "number": "99664504"}]}""")
-            .andExpect(status().isForbidden());
-    }
-
-    @Test
-    void theFrontendMayLookUpFromTheBrowser() throws Exception {
-        this.mockMvc.perform(options("/api/v1/beneficiaries/lookup")
-                .header("Origin", WEB_ORIGIN)
-                .header("Access-Control-Request-Method", "POST")
-                .header("Access-Control-Request-Headers", "Authorization, Content-Type")
-            )
-            .andExpect(status().isOk())
-            .andExpect(header().string("Access-Control-Allow-Origin", WEB_ORIGIN));
-        this.mockMvc.perform(options("/api/v1/beneficiaries/lookup")
-                .header("Origin", "https://elsewhere.example")
-                .header("Access-Control-Request-Method", "POST")
-            )
             .andExpect(status().isForbidden());
     }
 
